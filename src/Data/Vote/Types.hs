@@ -4,12 +4,17 @@ module Data.Vote.Types
   ( Candidates
   , CandidateRef
   , Vote
+  , Ranking
   , Edge
   , WeightedEdge
   , WeightedEdges
   , isValid
+  , fromCandRef
+  , toCandRef
+  , toEdge
   ) where
 
+import           Data.Char ( chr, ord )
 import qualified Data.Map.Strict as Map
 import           Data.Maybe ( isJust )
 import qualified Data.Set as Set
@@ -27,6 +32,9 @@ type Candidates = Map.Map CandidateRef Text
 -- | Type synonym representing votes. A vote is a collection of pairs of a
 -- reference to a candidate and the candidate's (optional) rank (1, 2, ...).
 type Vote = Map.Map CandidateRef (Maybe Int)
+
+-- | Type synonym representing rankings.
+type Ranking = (CandidateRef, Maybe Int)
 
 -- | Type synonym representing edges.
 type Edge = (Int, Int)
@@ -59,3 +67,12 @@ isValid candidates vote
    where
     hasNoRanks = Map.null $ Map.filter isJust vote'
     (c', vote'') = first Map.size $ Map.partition (Just i ==) vote'
+
+fromCandRef :: CandidateRef -> Int
+fromCandRef c = ord c - ord 'A'
+
+toCandRef :: Int -> CandidateRef
+toCandRef i = chr (ord 'A' + i)
+
+toEdge :: CandidateRef -> CandidateRef -> Edge
+toEdge cand cand' = (fromCandRef cand, fromCandRef cand')

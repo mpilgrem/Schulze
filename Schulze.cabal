@@ -6,6 +6,7 @@ cabal-version: 2.2
 
 name:           Schulze
 version:        0.1.0.0
+synopsis:       A Haskell package to apply the Schulze method to a vote result.
 description:    Please see the README on GitHub at <https://github.com/mpilgrem/Schulze#readme>
 homepage:       https://github.com/mpilgrem/Schulze#readme
 bug-reports:    https://github.com/mpilgrem/Schulze/issues
@@ -25,12 +26,10 @@ source-repository head
 
 library
   exposed-modules:
-      Algorithms.Schulze
       Data.Text.Compat
       Data.Vote.IO
       Data.Vote.Schulze
       Data.Vote.Types
-      Lib
   other-modules:
       Paths_Schulze
   autogen-modules:

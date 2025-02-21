@@ -13,10 +13,8 @@ import           Data.Text ( unpack )
 import           Data.Vector.Unboxed ( Vector, (!) )
 import           Data.Vote.IO ( decodeEither )
 import           Data.Vote.Schulze
-                   ( directedWeightedEdges, mkGraph, mkIndex, toCandRef
-                   , toWeightedEdges
-                   )
-import           Data.Vote.Types ( Candidates, Vote, WeightedEdges )
+                   ( directedWeightedEdges, mkGraph, mkIndex, toWeightedEdges )
+import           Data.Vote.Types ( Candidates, Vote, WeightedEdges, toCandRef )
 import           System.Environment ( getArgs )
 import           Text.Printf ( printf )
 

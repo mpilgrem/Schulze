@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedLists   #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Data.Vote.Schulze
   ( Edge
   , WeightedEdges
@@ -8,69 +5,87 @@ module Data.Vote.Schulze
   , directedWeightedEdges
   , mkGraph
   , mkIndex
-  , toCandRef
   ) where
 
-import           Algorithms.Schulze ( mkGraph', mkIndex, schulze )
-import           Control.Monad.ST ( runST )
-import           Data.Char ( chr, ord )
+import           Control.Monad ( forM_, unless, when )
+import           Control.Monad.ST ( ST, runST )
 import qualified Data.Map.Strict as Map
 import           Data.Tuple ( swap )
 import           Data.Vector.Unboxed ( Vector, freeze )
+import           Data.Vector.Unboxed.Mutable ( MVector )
+import qualified Data.Vector.Unboxed.Mutable as V
 import           Data.Vote.Types
-                   ( CandidateRef, Edge, Vote, WeightedEdge, WeightedEdges )
+                   ( Edge, Ranking, Vote, WeightedEdge, WeightedEdges, toEdge )
 
 toWeightedEdges :: [Vote] -> WeightedEdges
 toWeightedEdges =
-  foldr (\vs we -> toWeightedEdges' we (Map.assocs vs)) Map.empty
+  foldr (\vs we -> addRankings we (Map.assocs vs)) Map.empty
 
-toWeightedEdges' ::
-     WeightedEdges
-  -> [(CandidateRef, Maybe Int)]
-  -> WeightedEdges
-toWeightedEdges' we [] = we
-toWeightedEdges' we [_] = we
-toWeightedEdges' we (v : vs) = foldr (toWeightedEdges'' v) we' vs
+addRankings :: WeightedEdges -> [Ranking] -> WeightedEdges
+addRankings we [] = we
+addRankings we [_] = we
+addRankings we (r : rs) = foldr (addRankingPair r) we' rs
  where
-  we' = toWeightedEdges' we vs
+  we' = addRankings we rs
 
-toWeightedEdges'' ::
-     (CandidateRef, Maybe Int)
-  -> (CandidateRef, Maybe Int)
-  -> WeightedEdges
-  -> WeightedEdges
-toWeightedEdges'' (cand, mRank) (cand', mRank') =
-  case (mRank, mRank') of
-    (Nothing, Nothing) -> id
-    (Just _, Nothing) -> Map.insertWith (\_ c -> c + 1) edge 1
-    (Nothing, Just _) -> Map.insertWith (\_ c -> c + 1) edge' 1
-    (Just r, Just r')
-      | r < r' -> Map.insertWith (\_ c -> c + 1) edge 1
-      | r' < r -> Map.insertWith (\_ c -> c + 1) edge' 1
-      | otherwise -> id
+addRankingPair :: Ranking -> Ranking -> WeightedEdges -> WeightedEdges
+addRankingPair (cand, mRank) (cand', mRank') = case (mRank, mRank') of
+  (Nothing, Nothing) -> id
+  (Just _, Nothing) -> addBeat edge
+  (Nothing, Just _) -> addBeat edge'
+  (Just r, Just r')
+    | r < r' -> addBeat edge
+    | r' < r -> addBeat edge'
+    | otherwise -> id
  where
-  edge = (fromCandRef cand, fromCandRef cand')
+  edge = toEdge cand cand'
   edge' = swap edge
-
-fromCandRef :: CandidateRef -> Int
-fromCandRef c = ord c - ord 'A'
-
-toCandRef :: Int -> CandidateRef
-toCandRef i = chr (ord 'A' + i)
+  addBeat e = Map.insertWith (\_ c -> c + 1) e 1
 
 directedWeightedEdges :: WeightedEdges -> [WeightedEdge]
 directedWeightedEdges we = Map.assocs $ Map.filterWithKey p we
  where
-  p k cost = let mV = Map.lookup (swap k) we
-             in  case mV of
-                   Nothing -> True
-                   Just cost' -> case compare cost cost' of
-                     LT -> False
-                     EQ -> False
-                     GT -> True
+  p k cost = case Map.lookup (swap k) we of
+               Nothing -> True
+               Just cost' -> case compare cost cost' of
+                 LT -> False
+                 EQ -> False
+                 GT -> True
 
-mkGraph :: Int -> [((Int, Int), Int)] -> Vector Int
+--------------------------------------------------------------------------------
+-- Implementation of Schulze widest path algorithm.
+--
+-- See Wikipedia article for details:
+-- https://en.wikipedia.org/wiki/Schulze_method
+--
+-- Based on package hgeometry-combinatorial-0.14
+--------------------------------------------------------------------------------
+
+-- | Compute the index of an element in a given range.
+mkIndex :: Int -> Edge -> Int
+mkIndex n (i, j) = i * n + j
+
+-- | Construct a weighted graph from \(n\) vertices and a list of weighted edges.
+mkGraph :: Int -> [WeightedEdge] -> Vector Int
 mkGraph n edges = runST $ do
-  graph' <- mkGraph' n edges
-  schulze n graph'
-  freeze graph'
+  graph <- V.replicate (n * n) 0
+  forM_ edges $ \(edge, cost) -> V.unsafeWrite graph (mkIndex n edge) cost
+  schulze n graph
+  freeze graph
+
+schulze :: Int -> MVector s Int -> ST s ()
+schulze n graph = do
+  when (n * n /= V.length graph) $ error "Bad bounds"
+  forM_ [0 .. n - 1] $ \i ->
+    forM_ [0 .. n - 1] $ \j -> do
+      unless (i == j) $ do
+        forM_ [0 .. n - 1] $ \k -> do
+          unless ( i == k || j == k) $ do
+            costJK <- access (j, k)
+            costJI <- access (j, i)
+            costIK <- access (i, k)
+            let cost = max costJK (min costJI costIK)
+            put (j, k) cost
+ where
+  access idx = V.unsafeRead graph (mkIndex n idx)
+  put idx e = V.unsafeWrite graph (mkIndex n idx) e

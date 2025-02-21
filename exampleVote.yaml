@@ -1,0 +1,71 @@
+candidates:
+  A: Candidate A
+  B: Candidate B
+  C: Candidate C
+  D: Candidate D
+  E: That's it
+
+votes:
+  voteACBED:
+    count: 5
+    A: 1
+    C: 2
+    B: 3
+    E: 4
+    D: 5
+
+  voteADECB:
+    count: 5
+    A: 1
+    D: 2
+    E: 3
+    C: 4
+    B: 5
+
+  voteBEDAC:
+    count: 8
+    B: 1
+    E: 2
+    D: 3
+    A: 4
+    C: 5
+
+  voteCABED:
+    count: 3
+    C: 1
+    A: 2
+    B: 3
+    E: 4
+    D: 5
+
+  voteCAEBD:
+    count: 7
+    C: 1
+    A: 2
+    E: 3
+    B: 4
+    D: 5
+
+  voteCBADE:
+    count: 2
+    C: 1
+    B: 2
+    A: 3
+    D: 4
+    E: 5
+
+  voteDCEBA:
+    count: 7
+    D: 1
+    C: 2
+    E: 3
+    B: 4
+    A: 5
+
+  voteEBADC:
+    count: 8
+    E: 1
+    B: 2
+    A: 3
+    D: 4
+    C: 5

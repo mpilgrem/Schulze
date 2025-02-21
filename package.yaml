@@ -1,0 +1,56 @@
+name:                Schulze
+version:             0.1.0.0
+github:              "mpilgrem/Schulze"
+license:             BSD-3-Clause
+author:              "Mike Pilgrem"
+maintainer:          "public@pilgrem.com"
+copyright:           "Copyright 2025 Mike Pilgrem"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+synopsis: A Haskell package to apply the Schulze method to a vote result.
+
+# category:            Test
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/mpilgrem/Schulze#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- bytestring
+- containers
+- extra
+- vector
+- scientific
+- text
+- yaml
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  Schulze:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Schulze

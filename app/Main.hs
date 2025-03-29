@@ -97,7 +97,7 @@ printRanking n graph = do
     putStr $ toCandRef i : ": "
     forM_ indicesN $ \j -> do
       putStr $ snd $ count i j
-    putStr "\n"
+    putStr $ printf "%4d\n" $ n + 1 - (value i)
  where
   indicesN = indices n
   value i = sum $ map (fst . (count i)) indicesN
